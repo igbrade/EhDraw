@@ -6,7 +6,7 @@ ifeq ($(OS), Windows_NT)
 endif
 
 CXX := g++
-LDFLAGS := 
+LDFLAGS := -lgdi32 -lopengl32
 CPPFLAGS := -Wall
 CXXFLAGS := -std=gnu++17
 
@@ -23,7 +23,7 @@ run: $(binFolder)/$(target)
 	$(binFolder)/$(target)
 
 $(binFolder)/$(target): $(addprefix $(objFolder)/,$(OBJS))
-	$(CXX) $^ -o $@
+	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(objFolder)/%.o: $(srcFolder)/%.cpp
 	$(CXX) -c $< -o $@
