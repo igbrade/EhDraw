@@ -1,0 +1,29 @@
+targetName := main
+
+target := $(targetName)
+ifeq ($(OS), Windows_NT)
+	target := $(target).exe
+endif
+
+CXX := g++
+LDFLAGS := 
+CPPFLAGS := -Wall
+CXXFLAGS := -std=gnu++17
+
+objFolder := ./obj
+srcFolder := ./src
+binFolder := ./bin
+
+SRCS := main.cpp
+OBJS := $(patsubst %.cpp,%.o,$(SRCS))
+
+.PHONY: run
+
+run: $(binFolder)/$(target)
+	$(binFolder)/$(target)
+
+$(binFolder)/$(target): $(addprefix $(objFolder)/,$(OBJS))
+	$(CXX) $^ -o $@
+
+$(objFolder)/%.o: $(srcFolder)/%.cpp
+	$(CXX) -c $< -o $@
