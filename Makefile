@@ -26,4 +26,4 @@ $(binFolder)/$(target): $(addprefix $(objFolder)/,$(OBJS))
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(objFolder)/%.o: $(srcFolder)/%.cpp
-	$(CXX) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@

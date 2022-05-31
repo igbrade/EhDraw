@@ -5,6 +5,7 @@
 #include <GL/gl.h>
 #include <iostream>
 #include <utility>
+#include <algorithm>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
@@ -100,64 +101,48 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             // printf("Mouse pos: (%4d, %4d)\r", mouseX, mouseY);
             if(mouseDown)
             {
+
                 float normalizedX = 2.0 * mouseX / windowWidth - 1.0;
                 float normalizedY = 2.0 * mouseY / windowHeight - 1.0;
 
                 if(-0.5 <= normalizedX && normalizedX <= 0.5){
                     if(-0.5 <= normalizedY && normalizedY <= 0.5)
                     {
+                        toRender(mouseX, mouseY, 0, 0, 0);
                         // printf("%d %d %d %d\n", mouseX, lastX, mouseY, lastY);
                         int dX = abs(mouseX - lastX);
                         int dY = abs(mouseY - lastY);
-                        if(dY == 0 || dX >= dY){
-                            int x = lastX, y = lastY;
-                            while(x != mouseX || y != mouseY){
-                                int progressionRate = (dY == 0 ? 0x3f3f3f3f : dX / dY);
-                                while(progressionRate-- && x != mouseX){
-                                    if(x < mouseX) x++;
-                                    else x--;
-
-                                    toRender(x, y, 0, 0, 0);
-                                }
-                                if(y < mouseY) y++;
-                                else y--;
-
-                                toRender(x, y, 0, 0, 0);
-                            }
-                        } else {
-                            int x = lastX, y = lastY;
-                            while(x != mouseX || y != mouseY){
-                                int progressionRate = (dX == 0 ? 0x3f3f3f3f : dY / dX);
-                                while(progressionRate-- && y != mouseY){
-                                    if(y < mouseY) y++;
-                                    else y--;
-
-                                    toRender(x, y, 0, 0, 0);
-                                }
+                        int x = lastX, y = lastY;
+                        bool swapped = 0;
+                        if(dX < dY){
+                            swapped = 1, std::swap(x, y), std::swap(mouseX, mouseY), std::swap(dX, dY);
+                        }
+                        
+                        while(x != mouseX || y != mouseY){
+                            int progressionRate = (dY == 0 ? 0x3f3f3f3f : dX / dY);
+                            while(progressionRate-- && x != mouseX){
                                 if(x < mouseX) x++;
                                 else x--;
 
-                                toRender(x, y, 0, 0, 0);
+                                if(swapped) toRender(y, x, 0, 0, 0);
+                                else toRender(x, y, 0, 0, 0);
                             }
+                            if(y != mouseY){
+                                if(y < mouseY) y++;
+                                else y--;
+                            }
+
+                            if(swapped) toRender(y, x, 0, 0, 0);
+                            else toRender(x, y, 0, 0, 0);
                         }
-
-                        float textureCoordX = normalizedX - (-0.5);
-                        float textureCoordY = normalizedY - (-0.5);
-
-                        textureCoordY = 1 - textureCoordY;
-
-                        int pixelX = canvasWidth * textureCoordX;
-                        int pixelY = canvasHeight * textureCoordY;
-
-                        int pixelPos = canvasRowSz * pixelY + pixelX * 3;
-                        pixels[pixelPos] = 0;
-                        pixels[pixelPos + 1] = 0;
-                        pixels[pixelPos + 2] = 0;
+                    
 
                         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-                        printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
+                        // printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
 
                         PostMessage(hwnd, WM_PAINT, 0, 0);
+                        if(swapped)
+                            std::swap(mouseX, mouseY);
                         lastX = mouseX;
                         lastY = mouseY;
                     }
@@ -178,21 +163,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if(-0.5 <= normalizedX && normalizedX <= 0.5){
                 if(-0.5 <= normalizedY && normalizedY <= 0.5)
                 {
-                    float textureCoordX = normalizedX - (-0.5); 
-                    float textureCoordY = normalizedY - (-0.5);
-
-                    textureCoordY = 1 - textureCoordY;
-
-                    int pixelX = canvasWidth * textureCoordX;
-                    int pixelY = canvasHeight * textureCoordY;
-
-                    int pixelPos = canvasRowSz * pixelY + pixelX * 3;
-                    pixels[pixelPos] = 0;
-                    pixels[pixelPos + 1] = 0;
-                    pixels[pixelPos + 2] = 0;
+                    toRender(mouseX, mouseY, 0, 0, 0);
 
                     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-                    printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
+                    // printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
 
                     PostMessage(hwnd, WM_PAINT, 0, 0);
                 }
@@ -329,7 +303,7 @@ int main()
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     pixels = new unsigned char[canvasBytes];
     for(int i = 0; i < canvasHeight; ++i)
         for(int j = 0; j < canvasWidth; ++j)
