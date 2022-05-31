@@ -36,6 +36,8 @@ unsigned char *pixels;
 int windowWidth;
 int windowHeight;
 
+bool mouseDown = false;
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
@@ -58,13 +60,41 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 		case WM_MOUSEMOVE:
 		{
-			// int mouseX = GET_X_LPARAM(lParam);
-			// int mouseY = GET_Y_LPARAM(lParam);
+			int mouseX = GET_X_LPARAM(lParam);
+			int mouseY = GET_Y_LPARAM(lParam);
 			// printf("Mouse pos: (%4d, %4d)\r", mouseX, mouseY);
+			if(mouseDown)
+			{
+				float normalizedX = 2.0 * mouseX / windowWidth - 1.0;
+				float normalizedY = 2.0 * mouseY / windowHeight - 1.0;
+
+			if(-0.5 <= normalizedX && normalizedX <= 0.5)
+				if(-0.5 <= normalizedY && normalizedY <= 0.5)
+				{
+					float textureCoordX = normalizedX - (-0.5); 
+					float textureCoordY = normalizedY - (-0.5);
+
+					textureCoordY = 1 - textureCoordY;
+
+					int pixelX = canvasWidth * textureCoordX;
+					int pixelY = canvasHeight * textureCoordY;
+
+					int pixelPos = canvasRowSz * pixelY + pixelX * 3;
+					pixels[pixelPos] = 0;
+					pixels[pixelPos + 1] = 0;
+					pixels[pixelPos + 2] = 0;
+
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+					printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
+
+					PostMessage(hwnd, WM_PAINT, 0, 0);
+				}
+			}
 			break;
 		}
 		case WM_LBUTTONDOWN:
 		{
+			mouseDown = true;
 			int mouseX = GET_X_LPARAM(lParam);
 			int mouseY = GET_Y_LPARAM(lParam);
 			float normalizedX = 2.0 * mouseX / windowWidth - 1.0;
@@ -93,6 +123,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 
 
+			break;
+		}
+		case WM_LBUTTONUP:
+		{
+			mouseDown = false;
 			break;
 		}
 		case WM_PAINT:
