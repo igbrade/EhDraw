@@ -40,6 +40,7 @@ int windowWidth;
 int windowHeight;
 
 bool mouseDown = false;
+bool eraser = false;
 
 int lastX, lastY;
 
@@ -78,6 +79,8 @@ extern void (*mouseMoveCallback)(int mouseX, int mouseY);
 extern void (*mouseDownCallback)(int mouseX, int mouseY);
 extern void (*mouseUpCallback)(int mouseX, int mouseY);
 extern void (*resizeCallback)(int newWidth, int newHeight);
+extern void (*keyDownCallback)(int key);
+extern void (*keyUpCallback)(int key);
 
 void onMouseMove(int mouseX, int mouseY)
 {
@@ -91,7 +94,10 @@ void onMouseMove(int mouseX, int mouseY)
         if(-0.5 <= normalizedX && normalizedX <= 0.5){
             if(-0.5 <= normalizedY && normalizedY <= 0.5)
             {
-                toRender(mouseX, mouseY, 0, 0, 0);
+            	if(eraser)
+            		toRender(mouseX, mouseY, 0xff, 0xff, 0xff);
+            	else
+                	toRender(mouseX, mouseY, 0, 0, 0);
                 // printf("%d %d %d %d\n", mouseX, lastX, mouseY, lastY);
                 int dX = abs(mouseX - lastX);
                 int dY = abs(mouseY - lastY);
@@ -107,16 +113,40 @@ void onMouseMove(int mouseX, int mouseY)
                         if(x < mouseX) x++;
                         else x--;
 
-                        if(swapped) toRender(y, x, 0, 0, 0);
-                        else toRender(x, y, 0, 0, 0);
+                        if(swapped)
+                        {
+                        	if(eraser)
+                        		toRender(y, x, 0xff, 0xff, 0xff);
+                        	else
+                        		toRender(y, x, 0, 0, 0);
+                        }
+                        else
+                        {
+                        	if(eraser)
+	                        	toRender(x, y, 0xff, 0xff, 0xff);
+                        	else
+                        		toRender(x, y, 0, 0, 0);
+                        }
                     }
                     if(y != mouseY){
                         if(y < mouseY) y++;
                         else y--;
                     }
 
-                    if(swapped) toRender(y, x, 0, 0, 0);
-                    else toRender(x, y, 0, 0, 0);
+                    if(swapped)
+                    {
+                    	if(eraser)
+                    		toRender(y, x, 0xff, 0xff, 0xff);
+                    	else
+                    		toRender(y, x, 0, 0, 0);
+                    }
+                    else
+                    {
+                    	if(eraser)
+                    		toRender(x, y, 0xff, 0xff, 0xff);
+                    	else
+                   			toRender(x, y, 0, 0, 0);
+                    }
                 }
             
 
@@ -144,7 +174,10 @@ void onMouseDown(int mouseX, int mouseY)
     if(-0.5 <= normalizedX && normalizedX <= 0.5){
         if(-0.5 <= normalizedY && normalizedY <= 0.5)
         {
-            toRender(mouseX, mouseY, 0, 0, 0);
+        	if(eraser)
+        		toRender(mouseX, mouseY, 0xff, 0xff, 0xff);
+        	else	
+            	toRender(mouseX, mouseY, 0, 0, 0);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
             // printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
@@ -166,6 +199,12 @@ void onResize(int newWidth, int newHeight)
 	windowHeight = newHeight;
 }
 
+void onKeyDown(int key)
+{
+	if(key == 'E')
+		eraser = !eraser;
+}
+
 int main()
 {
 	if(!win32Init())
@@ -180,6 +219,7 @@ int main()
 	mouseDownCallback = onMouseDown;
 	mouseMoveCallback = onMouseMove;
 	resizeCallback = onResize;
+	keyDownCallback = onKeyDown;
 
 	win32ShowWindow(&window);
 

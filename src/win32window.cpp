@@ -11,6 +11,8 @@ void (*mouseMoveCallback)(int mouseX, int mouseY);
 void (*mouseDownCallback)(int mouseX, int mouseY);
 void (*mouseUpCallback)(int mouseX, int mouseY);
 void (*resizeCallback)(int newWidth, int newHeight);
+void (*keyDownCallback)(int key);
+void (*keyUpCallback)(int key);
 
 bool win32Init()
 {
@@ -183,6 +185,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		{
+			if(msg == WM_KEYDOWN && keyDownCallback != NULL)
+				keyDownCallback(wParam);
+			if(msg == WM_KEYUP && keyUpCallback != NULL)
+				keyUpCallback(wParam);
 			break;
 		}
 		case WM_PAINT:
