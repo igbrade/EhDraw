@@ -14,7 +14,7 @@ objFolder := ./obj
 srcFolder := ./src
 binFolder := ./bin
 
-SRCS := main.cpp
+SRCS := main.cpp win32window.cpp
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
 .PHONY: run
