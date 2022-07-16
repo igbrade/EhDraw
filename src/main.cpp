@@ -56,7 +56,7 @@ std::pair<float, float> normalize(int X, int Y){
     return std::make_pair(normalizeX(X), normalizeY(Y));
 }
 
-void toRender(int X, int Y, int r, int g, int b){
+void toRender(int X, int Y, int r, int g, int b, int radius = 1){
     // printf("%d %d\n", X, Y);
     auto [normalizedX, normalizedY] = normalize(X, Y);
 
@@ -68,10 +68,16 @@ void toRender(int X, int Y, int r, int g, int b){
     int pixelX = canvasWidth * textureCoordX;
     int pixelY = canvasHeight * textureCoordY;
 
-    int pixelPos = canvasRowSz * pixelY + pixelX * 3;
-    pixels[pixelPos] = r;
-    pixels[pixelPos + 1] = g;
-    pixels[pixelPos + 2] = b;
+    for(int xx = std::max(0, pixelX - radius + 1); xx <= std::min((int)canvasWidth, pixelX + radius - 1); ++xx)
+    {
+    	for(int yy = std::max(0, pixelY - radius + 1); yy <= std::min((int)canvasHeight, pixelY + radius - 1); ++yy)
+    	{
+    		int pixelPos = canvasRowSz * yy + xx * 3;
+    		pixels[pixelPos] = r;
+    		pixels[pixelPos + 1] = g;
+    		pixels[pixelPos + 2] = b;
+    	}
+	}
 }
   
 extern void (*drawCallback)();
