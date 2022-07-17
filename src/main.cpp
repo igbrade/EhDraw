@@ -9,21 +9,30 @@
 
 #include "win32window.hpp"
 
+int windowWidth;
+int windowHeight;
+
+float canvasXX;
+float canvasYY = 0.75;
+
 win32Window window;
 void draw()
 {
     glClearColor(0, 0, 0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    float ratio = windowHeight / (float)windowWidth;
+    canvasXX = ratio * canvasYY;
+
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(-0.5, -0.5);
+    glVertex2f(-canvasXX, -canvasYY);
     glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(0.5, -0.5);
+    glVertex2f(canvasXX, -canvasYY);
     glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(0.5, 0.5);
+    glVertex2f(canvasXX, canvasYY);
     glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(-0.5, 0.5);
+    glVertex2f(-canvasXX, canvasYY);
     glEnd();
 
     glFlush();
@@ -36,8 +45,6 @@ unsigned int canvasRowSz = 4 * ((canvasWidth * 3 + 3) / 4);
 unsigned int canvasBytes = canvasRowSz * canvasHeight;
 unsigned char *pixels;
 
-int windowWidth;
-int windowHeight;
 
 bool mouseDown = false;
 bool eraser = false;
@@ -60,8 +67,10 @@ void toRender(int X, int Y, int r, int g, int b, int radius = 1){
     // printf("%d %d\n", X, Y);
     auto [normalizedX, normalizedY] = normalize(X, Y);
 
-    float textureCoordX = normalizedX - (-0.5);
-    float textureCoordY = normalizedY - (-0.5);
+    float textureCoordX = normalizedX - (-canvasXX);
+    textureCoordX /= (2 * canvasXX);
+    float textureCoordY = normalizedY - (-canvasYY);
+    textureCoordY /= (2 * canvasYY);
 
     textureCoordY = 1 - textureCoordY;
 
