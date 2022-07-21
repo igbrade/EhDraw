@@ -106,8 +106,8 @@ void onMouseMove(int mouseX, int mouseY)
         float normalizedX = 2.0 * mouseX / windowWidth - 1.0;
         float normalizedY = 2.0 * mouseY / windowHeight - 1.0;
 
-        if(-0.5 <= normalizedX && normalizedX <= 0.5){
-            if(-0.5 <= normalizedY && normalizedY <= 0.5)
+        if(-canvasXX <= normalizedX && normalizedX <= canvasXX){
+            if(-canvasYY <= normalizedY && normalizedY <= canvasYY)
             {
             	if(eraser)
             		toRender(mouseX, mouseY, 0xff, 0xff, 0xff);
@@ -186,8 +186,8 @@ void onMouseDown(int mouseX, int mouseY)
     lastX = mouseX;
     lastY = mouseY;
 
-    if(-0.5 <= normalizedX && normalizedX <= 0.5){
-        if(-0.5 <= normalizedY && normalizedY <= 0.5)
+    if(canvasXX <= normalizedX && normalizedX <= canvasXX){
+        if(canvasYY <= normalizedY && normalizedY <= canvasYY)
         {
         	if(eraser)
         		toRender(mouseX, mouseY, 0xff, 0xff, 0xff);
