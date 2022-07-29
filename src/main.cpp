@@ -4,10 +4,10 @@
 #include <windowsx.h>
 #include <GL/gl.h>
 #include <iostream>
-#include <utility>
 #include <algorithm>
 
 #include "win32window.hpp"
+#include "vec2.hpp"
 
 int windowWidth;
 int windowHeight;
@@ -51,35 +51,23 @@ bool eraser = false;
 
 int lastX, lastY;
 
-float normalizeX(int X){
-    return 2.0 * X / windowWidth - 1.0;
+vec2<float> screenToNormalized(vec2<int> screenPos)
+{
+    return vec2<float>(2.0f * screenPos.x / windowWidth, 2.0f * screenPos.y / windowHeight) - vec2<float>::one();
 }
 
-float normalizeY(int Y){
-    return 2.0 * Y / windowHeight - 1.0;
-}
+void canvasPaint(int screenX, int screenY, int r, int g, int b, int radius = 1){
+    vec2<float> normalized = screenToNormalized(vec2<int>(screenX, screenY));
+    vec2<float> textureCoord = normalized - vec2<float>(-canvasXX, -canvasYY);
+    textureCoord.x /= (2 * canvasXX);
+    textureCoord.y /= (2 * canvasYY);
+    textureCoord.y = 1 - textureCoord.y;
 
-std::pair<float, float> normalize(int X, int Y){
-    return std::make_pair(normalizeX(X), normalizeY(Y));
-}
+    vec2<int> pixelCoord = vec2<int>(canvasWidth * textureCoord.x, canvasHeight * textureCoord.y);
 
-void toRender(int X, int Y, int r, int g, int b, int radius = 1){
-    // printf("%d %d\n", X, Y);
-    auto [normalizedX, normalizedY] = normalize(X, Y);
-
-    float textureCoordX = normalizedX - (-canvasXX);
-    textureCoordX /= (2 * canvasXX);
-    float textureCoordY = normalizedY - (-canvasYY);
-    textureCoordY /= (2 * canvasYY);
-
-    textureCoordY = 1 - textureCoordY;
-
-    int pixelX = canvasWidth * textureCoordX;
-    int pixelY = canvasHeight * textureCoordY;
-
-    for(int xx = std::max(0, pixelX - radius + 1); xx <= std::min((int)canvasWidth, pixelX + radius - 1); ++xx)
+    for(int xx = std::max(0, pixelCoord.x - radius + 1); xx <= std::min((int)canvasWidth, pixelCoord.x + radius - 1); ++xx)
     {
-    	for(int yy = std::max(0, pixelY - radius + 1); yy <= std::min((int)canvasHeight, pixelY + radius - 1); ++yy)
+    	for(int yy = std::max(0, pixelCoord.y - radius + 1); yy <= std::min((int)canvasHeight, pixelCoord.y + radius - 1); ++yy)
     	{
     		int pixelPos = canvasRowSz * yy + xx * 3;
     		pixels[pixelPos] = r;
@@ -87,6 +75,63 @@ void toRender(int X, int Y, int r, int g, int b, int radius = 1){
     		pixels[pixelPos + 2] = b;
     	}
 	}
+}
+
+void canvasPaintLine(vec2<int> screenA, vec2<int> screenB, int r, int g, int b)
+{
+    canvasPaint(screenA.x, screenA.y, r, g, b);
+
+    int dX = abs(screenA.x - lastX);
+    int dY = abs(screenA.y - lastY);
+    int x = lastX, y = lastY;
+    bool swapped = 0;
+    if(dX < dY)
+    {
+        swapped = 1, std::swap(x, y), std::swap(screenA.x, screenA.y), std::swap(dX, dY);
+    }
+    
+    while(x != screenA.x || y != screenA.y)
+    {
+        int progressionRate = (dY == 0 ? 0x3f3f3f3f : dX / dY);
+        while(progressionRate-- && x != screenA.x)
+        {
+            if(x < screenA.x) x++;
+            else x--;
+
+            if(swapped)
+            {
+                canvasPaint(y, x, r, g, b);
+            }
+            else
+            {
+                canvasPaint(x, y, r, g, b);
+            }
+        }
+        if(y != screenA.y)
+        {
+            if(y < screenA.y) y++;
+            else y--;
+        }
+
+        if(swapped)
+        {
+            canvasPaint(y, x, r, g, b);
+        }
+        else
+        {
+            canvasPaint(x, y, r, g, b);
+        }
+    }
+
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    // printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
+
+    PostMessage(window.hwnd, WM_PAINT, 0, 0);
+    if(swapped)
+        std::swap(screenA.x, screenA.y);
+    lastX = screenA.x;
+    lastY = screenA.y;
 }
   
 extern void (*drawCallback)();
@@ -102,77 +147,15 @@ void onMouseMove(int mouseX, int mouseY)
 	// printf("Mouse pos: (%4d, %4d)\r", mouseX, mouseY);
     if(mouseDown)
     {
-
-        float normalizedX = 2.0 * mouseX / windowWidth - 1.0;
-        float normalizedY = 2.0 * mouseY / windowHeight - 1.0;
-
-        if(-canvasXX <= normalizedX && normalizedX <= canvasXX){
-            if(-canvasYY <= normalizedY && normalizedY <= canvasYY)
+        vec2<float> normalized = screenToNormalized(vec2<int>(mouseX, mouseY));
+        if(-canvasXX <= normalized.x && normalized.x <= canvasXX)
+        {
+            if(-canvasYY <= normalized.y && normalized.y <= canvasYY)
             {
-            	if(eraser)
-            		toRender(mouseX, mouseY, 0xff, 0xff, 0xff);
-            	else
-                	toRender(mouseX, mouseY, 0, 0, 0);
-                // printf("%d %d %d %d\n", mouseX, lastX, mouseY, lastY);
-                int dX = abs(mouseX - lastX);
-                int dY = abs(mouseY - lastY);
-                int x = lastX, y = lastY;
-                bool swapped = 0;
-                if(dX < dY){
-                    swapped = 1, std::swap(x, y), std::swap(mouseX, mouseY), std::swap(dX, dY);
-                }
-                
-                while(x != mouseX || y != mouseY){
-                    int progressionRate = (dY == 0 ? 0x3f3f3f3f : dX / dY);
-                    while(progressionRate-- && x != mouseX){
-                        if(x < mouseX) x++;
-                        else x--;
-
-                        if(swapped)
-                        {
-                        	if(eraser)
-                        		toRender(y, x, 0xff, 0xff, 0xff);
-                        	else
-                        		toRender(y, x, 0, 0, 0);
-                        }
-                        else
-                        {
-                        	if(eraser)
-	                        	toRender(x, y, 0xff, 0xff, 0xff);
-                        	else
-                        		toRender(x, y, 0, 0, 0);
-                        }
-                    }
-                    if(y != mouseY){
-                        if(y < mouseY) y++;
-                        else y--;
-                    }
-
-                    if(swapped)
-                    {
-                    	if(eraser)
-                    		toRender(y, x, 0xff, 0xff, 0xff);
-                    	else
-                    		toRender(y, x, 0, 0, 0);
-                    }
-                    else
-                    {
-                    	if(eraser)
-                    		toRender(x, y, 0xff, 0xff, 0xff);
-                    	else
-                   			toRender(x, y, 0, 0, 0);
-                    }
-                }
-            
-
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-                // printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
-
-                PostMessage(window.hwnd, WM_PAINT, 0, 0);
-                if(swapped)
-                    std::swap(mouseX, mouseY);
-                lastX = mouseX;
-                lastY = mouseY;
+                if(eraser)
+                    canvasPaintLine(vec2<int>(mouseX, mouseY), vec2<int>(lastX, lastY), 0xff, 0xff, 0xff);
+                else 
+                    canvasPaintLine(vec2<int>(mouseX, mouseY), vec2<int>(lastX, lastY), 0, 0, 0);
             }
         }
     }
@@ -190,9 +173,9 @@ void onMouseDown(int mouseX, int mouseY)
         if(canvasYY <= normalizedY && normalizedY <= canvasYY)
         {
         	if(eraser)
-        		toRender(mouseX, mouseY, 0xff, 0xff, 0xff);
+        		canvasPaint(mouseX, mouseY, 0xff, 0xff, 0xff);
         	else	
-            	toRender(mouseX, mouseY, 0, 0, 0);
+            	canvasPaint(mouseX, mouseY, 0, 0, 0);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
             // printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
