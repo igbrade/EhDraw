@@ -49,7 +49,7 @@ unsigned char *pixels;
 bool mouseDown = false;
 bool eraser = false;
 
-int lastX, lastY;
+vec2<int> lastMouse;
 
 vec2<float> screenToNormalized(vec2<int> screenPos)
 {
@@ -81,9 +81,9 @@ void canvasPaintLine(vec2<int> screenA, vec2<int> screenB, int r, int g, int b)
 {
     canvasPaint(screenA.x, screenA.y, r, g, b);
 
-    int dX = abs(screenA.x - lastX);
-    int dY = abs(screenA.y - lastY);
-    int x = lastX, y = lastY;
+    int dX = abs(screenA.x - screenB.x);
+    int dY = abs(screenA.y - screenB.y);
+    int x = screenB.x, y = screenB.y;
     bool swapped = 0;
     if(dX < dY)
     {
@@ -130,8 +130,6 @@ void canvasPaintLine(vec2<int> screenA, vec2<int> screenB, int r, int g, int b)
     PostMessage(window.hwnd, WM_PAINT, 0, 0);
     if(swapped)
         std::swap(screenA.x, screenA.y);
-    lastX = screenA.x;
-    lastY = screenA.y;
 }
   
 extern void (*drawCallback)();
@@ -144,18 +142,19 @@ extern void (*keyUpCallback)(int key);
 
 void onMouseMove(int mouseX, int mouseY)
 {
-	// printf("Mouse pos: (%4d, %4d)\r", mouseX, mouseY);
+    vec2<int> mouseCoords(mouseX, mouseY);
     if(mouseDown)
     {
-        vec2<float> normalized = screenToNormalized(vec2<int>(mouseX, mouseY));
+        vec2<float> normalized = screenToNormalized(mouseCoords);
         if(-canvasXX <= normalized.x && normalized.x <= canvasXX)
         {
             if(-canvasYY <= normalized.y && normalized.y <= canvasYY)
             {
                 if(eraser)
-                    canvasPaintLine(vec2<int>(mouseX, mouseY), vec2<int>(lastX, lastY), 0xff, 0xff, 0xff);
+                    canvasPaintLine(mouseCoords, lastMouse, 0xff, 0xff, 0xff);
                 else 
-                    canvasPaintLine(vec2<int>(mouseX, mouseY), vec2<int>(lastX, lastY), 0, 0, 0);
+                    canvasPaintLine(mouseCoords, lastMouse, 0, 0, 0);
+                lastMouse = mouseCoords;
             }
         }
     }
@@ -164,13 +163,12 @@ void onMouseMove(int mouseX, int mouseY)
 void onMouseDown(int mouseX, int mouseY)
 {
 	mouseDown = true;
-	float normalizedX = 2.0 * mouseX / windowWidth - 1.0;
-    float normalizedY = 2.0 * mouseY / windowHeight - 1.0;
-    lastX = mouseX;
-    lastY = mouseY;
+    vec2<int> mousePos(mouseX, mouseY);
+    vec2<float> normalized = screenToNormalized(mousePos);
+    lastMouse = mousePos;
 
-    if(canvasXX <= normalizedX && normalizedX <= canvasXX){
-        if(canvasYY <= normalizedY && normalizedY <= canvasYY)
+    if(canvasXX <= normalized.x && normalized.x <= canvasXX){
+        if(canvasYY <= normalized.y && normalized.y <= canvasYY)
         {
         	if(eraser)
         		canvasPaint(mouseX, mouseY, 0xff, 0xff, 0xff);
@@ -178,7 +176,6 @@ void onMouseDown(int mouseX, int mouseY)
             	canvasPaint(mouseX, mouseY, 0, 0, 0);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-            // printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
 
             PostMessage(window.hwnd, WM_PAINT, 0, 0);
         }
