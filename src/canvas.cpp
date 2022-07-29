@@ -32,6 +32,17 @@ void destroyCanvas(canvas *c)
 	delete[] c->pixels;
 }
 
+void fillCanvas(canvas *c, int r, int g, int b)
+{
+	 for(int i = 0; i < c->pxDimension.y; ++i)
+        for(int j = 0; j < c->pxDimension.x; ++j)
+        {
+            int pos = i * c->rowSz + j * 3;
+            c->pixels[pos] = r;
+            c->pixels[pos + 1] = g;
+            c->pixels[pos + 2] = b;
+        }
+}
 
 void canvasPaint(canvas *c, vec2<float> textureCoord, int r, int g, int b)
 {

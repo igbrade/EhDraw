@@ -49,7 +49,7 @@ vec2<int> lastMouse;
 
 vec2<float> screenToNormalized(vec2<int> screenPos)
 {
-    return vec2<float>(2.0f * screenPos.x / windowWidth, 2.0f * screenPos.y / windowHeight) - vec2<float>::one();
+    return vec2<float>(2.0f * screenPos.x / windowWidth, 2.0f * (windowHeight - screenPos.y) / windowHeight) - vec2<float>::one();
 }
 
 vec2<float> normalizedToCanvasTextureCoord(vec2<float> normalized)
@@ -57,7 +57,6 @@ vec2<float> normalizedToCanvasTextureCoord(vec2<float> normalized)
     vec2<float> ret = normalized - vec2<float>(canvasPos.x - canvasXX, canvasPos.y - canvasYY);
     ret.x /= (2 * canvasXX);
     ret.y /= (2 * canvasYY);
-    ret.y = 1 - ret.y;
     return ret;
 }
 
@@ -132,8 +131,7 @@ void onMouseMove(int mouseX, int mouseY)
         if(mouseDown)
         {
             vec2<float> diff = screenToNormalized(mouseCoords) - screenToNormalized(lastMouse);
-            diff.x *= -1;
-            canvasPos = canvasPos - diff;
+            canvasPos = canvasPos + diff;
         }
 
         lastMouse = mouseCoords;
@@ -162,6 +160,8 @@ void onMouseMove(int mouseX, int mouseY)
     }
 }
 
+#include <cstdio>
+
 void onMouseDown(int mouseX, int mouseY)
 {
 	mouseDown = true;
@@ -170,7 +170,10 @@ void onMouseDown(int mouseX, int mouseY)
     if(spaceBarDown)
         return;
 
-    if(canvasPos.x - canvasXX <= normalized.x && normalized.x <= canvasPos.y + canvasXX)
+    printf("Bounds: %f %f %f %f\n", canvasPos.x - canvasXX, canvasPos.x + canvasXX, canvasPos.y - canvasYY, canvasPos.y + canvasYY);
+    printf("Normal: %f %f\n", normalized.x, normalized.y);
+
+    if(canvasPos.x - canvasXX <= normalized.x && normalized.x <= canvasPos.x + canvasXX)
     {
         if(canvasPos.y - canvasYY <= normalized.y && normalized.y <= canvasPos.y + canvasYY)
         {
@@ -203,6 +206,13 @@ void onKeyDown(int key)
 {
 	if(key == 'E')
 		eraser = !eraser;
+    if(key == 'C')
+    {
+        fillCanvas(&cnv, 0xff, 0xff, 0xff);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cnv.pxDimension.x, cnv.pxDimension.y, 0, GL_RGB, GL_UNSIGNED_BYTE, cnv.pixels);
+
+        PostMessage(window.hwnd, WM_PAINT, 0, 0);
+    }
     if(key == ' ')
         spaceBarDown = true;
 }
