@@ -13,3 +13,5 @@ struct canvas
 
 void initCanvas(canvas *c, vec2<int> dimension);
 void destroyCanvas(canvas *c);
+void canvasPaint(canvas *c, vec2<float> textureCoord, int r, int g, int b);
+void canvasPaintSquare(canvas *c, vec2<float> textureCoordCenter, int r, int g, int b, int sz);

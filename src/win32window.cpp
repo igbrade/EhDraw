@@ -1,4 +1,5 @@
 #include "win32window.hpp"
+#include <cstdio>
 
 //https://devblogs.microsoft.com/oldnewthing/20041025-00/?p=37483
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;

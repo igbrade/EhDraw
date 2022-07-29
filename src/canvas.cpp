@@ -1,5 +1,6 @@
 #include "canvas.hpp"
 #include <GL/gl.h>
+#include <algorithm>
 
 void initCanvas(canvas *c, vec2<int> dimension)
 {
@@ -15,8 +16,8 @@ void initCanvas(canvas *c, vec2<int> dimension)
         for(int j = 0; j < dimension.x; ++j)
         {
             int pos = i * c->rowSz + j * 3;
-            // pixels[pos] = i / 2;
-            // pixels[pos + 1] = j / 2;
+            //TODO: Add dark mode 
+            //Default canvas is white
             c->pixels[pos] = 0xff;
             c->pixels[pos + 1] = 0xff;
             c->pixels[pos + 2] = 0xff;
@@ -29,4 +30,31 @@ void initCanvas(canvas *c, vec2<int> dimension)
 void destroyCanvas(canvas *c)
 {
 	delete[] c->pixels;
+}
+
+
+void canvasPaint(canvas *c, vec2<float> textureCoord, int r, int g, int b)
+{
+    vec2<int> pixelCoord = vec2<int>(c->pxDimension.x * textureCoord.x, c->pxDimension.y * textureCoord.y);
+
+	int pixelPos = c->rowSz * pixelCoord.y + pixelCoord.x * 3;
+	c->pixels[pixelPos] = r;
+	c->pixels[pixelPos + 1] = g;
+	c->pixels[pixelPos + 2] = b;
+}
+
+void canvasPaintSquare(canvas *c, vec2<float> textureCoordCenter, int r, int g, int b, int sz)
+{
+    vec2<int> pixelCoord = vec2<int>(c->pxDimension.x * textureCoordCenter.x, c->pxDimension.y * textureCoordCenter.y);
+
+    for(int yy = std::max(0, pixelCoord.y - sz + 1); yy <= std::min((int)c->pxDimension.y, pixelCoord.y + sz - 1); ++yy)
+    {
+    	for(int xx = std::max(0, pixelCoord.x - sz + 1); xx <= std::min((int)c->pxDimension.x, pixelCoord.x + sz - 1); ++xx)
+    	{
+    		int pixelPos = c->rowSz * yy + xx * 3;
+    		c->pixels[pixelPos] = r;
+    		c->pixels[pixelPos + 1] = g;
+    		c->pixels[pixelPos + 2] = b;
+    	}
+	}
 }
