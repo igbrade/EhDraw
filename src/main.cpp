@@ -160,8 +160,6 @@ void onMouseMove(int mouseX, int mouseY)
     }
 }
 
-#include <cstdio>
-
 void onMouseDown(int mouseX, int mouseY)
 {
 	mouseDown = true;
@@ -169,9 +167,6 @@ void onMouseDown(int mouseX, int mouseY)
     vec2<float> normalized = screenToNormalized(mousePos);
     if(spaceBarDown)
         return;
-
-    printf("Bounds: %f %f %f %f\n", canvasPos.x - canvasXX, canvasPos.x + canvasXX, canvasPos.y - canvasYY, canvasPos.y + canvasYY);
-    printf("Normal: %f %f\n", normalized.x, normalized.y);
 
     if(canvasPos.x - canvasXX <= normalized.x && normalized.x <= canvasPos.x + canvasXX)
     {
