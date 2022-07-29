@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 
+#include "canvas.hpp"
 #include "win32window.hpp"
 #include "vec2.hpp"
 
@@ -16,6 +17,8 @@ float canvasXX;
 float canvasYY = 0.75;
 
 win32Window window;
+canvas cnv;
+
 void draw()
 {
     glClearColor(0, 0, 0, 1.0);
@@ -38,14 +41,6 @@ void draw()
     glFlush();
 }
 
-unsigned int texture;
-unsigned int canvasWidth = 128;
-unsigned int canvasHeight = 128;
-unsigned int canvasRowSz = 4 * ((canvasWidth * 3 + 3) / 4);
-unsigned int canvasBytes = canvasRowSz * canvasHeight;
-unsigned char *pixels;
-
-
 bool mouseDown = false;
 bool eraser = false;
 
@@ -63,16 +58,16 @@ void canvasPaint(int screenX, int screenY, int r, int g, int b, int radius = 1){
     textureCoord.y /= (2 * canvasYY);
     textureCoord.y = 1 - textureCoord.y;
 
-    vec2<int> pixelCoord = vec2<int>(canvasWidth * textureCoord.x, canvasHeight * textureCoord.y);
+    vec2<int> pixelCoord = vec2<int>(cnv.pxDimension.x * textureCoord.x, cnv.pxDimension.y * textureCoord.y);
 
-    for(int xx = std::max(0, pixelCoord.x - radius + 1); xx <= std::min((int)canvasWidth, pixelCoord.x + radius - 1); ++xx)
+    for(int xx = std::max(0, pixelCoord.x - radius + 1); xx <= std::min((int)cnv.pxDimension.x, pixelCoord.x + radius - 1); ++xx)
     {
-    	for(int yy = std::max(0, pixelCoord.y - radius + 1); yy <= std::min((int)canvasHeight, pixelCoord.y + radius - 1); ++yy)
+    	for(int yy = std::max(0, pixelCoord.y - radius + 1); yy <= std::min((int)cnv.pxDimension.y, pixelCoord.y + radius - 1); ++yy)
     	{
-    		int pixelPos = canvasRowSz * yy + xx * 3;
-    		pixels[pixelPos] = r;
-    		pixels[pixelPos + 1] = g;
-    		pixels[pixelPos + 2] = b;
+    		int pixelPos = cnv.rowSz * yy + xx * 3;
+    		cnv.pixels[pixelPos] = r;
+    		cnv.pixels[pixelPos + 1] = g;
+    		cnv.pixels[pixelPos + 2] = b;
     	}
 	}
 }
@@ -124,7 +119,7 @@ void canvasPaintLine(vec2<int> screenA, vec2<int> screenB, int r, int g, int b)
     }
 
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cnv.pxDimension.x, cnv.pxDimension.y, 0, GL_RGB, GL_UNSIGNED_BYTE, cnv.pixels);
     // printf("Clicked on: %f %f\n", textureCoordX, textureCoordY);
 
     PostMessage(window.hwnd, WM_PAINT, 0, 0);
@@ -175,7 +170,7 @@ void onMouseDown(int mouseX, int mouseY)
         	else	
             	canvasPaint(mouseX, mouseY, 0, 0, 0);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cnv.pxDimension.x, cnv.pxDimension.y, 0, GL_RGB, GL_UNSIGNED_BYTE, cnv.pixels);
 
             PostMessage(window.hwnd, WM_PAINT, 0, 0);
         }
@@ -218,24 +213,7 @@ int main()
 
 	win32ShowWindow(&window);
 
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    pixels = new unsigned char[canvasBytes];
-    for(int i = 0; i < canvasHeight; ++i)
-        for(int j = 0; j < canvasWidth; ++j)
-        {
-            int pos = i * canvasRowSz + j * 3;
-            // pixels[pos] = i / 2;
-            // pixels[pos + 1] = j / 2;
-            pixels[pos] = 0xff;
-            pixels[pos + 1] = 0xff;
-            pixels[pos + 2] = 0xff;
-        }
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, canvasWidth, canvasHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-    glEnable(GL_TEXTURE_2D);
+    initCanvas(&cnv, vec2<int>(128, 128));    
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0))
@@ -243,5 +221,6 @@ int main()
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    delete[] pixels;
+    
+    destroyCanvas(&cnv);
 }
