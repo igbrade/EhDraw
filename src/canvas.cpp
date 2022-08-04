@@ -49,10 +49,25 @@ void canvasPaint(canvas *c, vec2<float> textureCoord, int r, int g, int b)
 {
     vec2<int> pixelCoord = vec2<int>(c->pxDimension.x * textureCoord.x, c->pxDimension.y * textureCoord.y);
 
+    historyEntry e;
+    e.modifiedPixels = new pixelHistory[1];
+    e.nModifiedPixels = 1;
+    e.modifiedPixels[0].pos = pixelCoord;
+
+    c->history.push_back(e);
+
 	int pixelPos = c->rowSz * pixelCoord.y + pixelCoord.x * 3;
+    e.modifiedPixels[0].oldR = c->pixels[pixelPos];
+    e.modifiedPixels[0].oldG = c->pixels[pixelPos + 1];
+    e.modifiedPixels[0].oldB = c->pixels[pixelPos + 2];
+
 	c->pixels[pixelPos] = r;
 	c->pixels[pixelPos + 1] = g;
 	c->pixels[pixelPos + 2] = b;
+
+    e.modifiedPixels[0].newR = r;
+    e.modifiedPixels[0].newG = g;
+    e.modifiedPixels[0].newB = b;
 }
 
 void canvasPaintSquare(canvas *c, vec2<float> textureCoordCenter, int r, int g, int b, int sz)
@@ -85,6 +100,8 @@ void canvasUndo(canvas *c)
         c->pixels[pixelPos] = e.modifiedPixels[i].oldR;
         c->pixels[pixelPos + 1] = e.modifiedPixels[i].oldG;
         c->pixels[pixelPos + 2] = e.modifiedPixels[i].oldB;
-    }
+    }  
+    delete[] e.modifiedPixels;
     c->history.pop_back();
 }
+

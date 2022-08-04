@@ -204,6 +204,9 @@ void onKeyDown(int key)
     if(key == 'Z')
     {
         canvasUndo(&cnv);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cnv.pxDimension.x, cnv.pxDimension.y, 0, GL_RGB, GL_UNSIGNED_BYTE, cnv.pixels);
+
+        PostMessage(window.hwnd, WM_PAINT, 0, 0);
         return;
     }
     if(key == 'C')
