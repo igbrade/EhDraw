@@ -30,6 +30,7 @@ struct canvas
 void initCanvas(canvas *c, vec2<int> dimension);
 void destroyCanvas(canvas *c);
 void fillCanvas(canvas *c, int r, int g, int b);
-void canvasPaint(canvas *c, vec2<float> textureCoord, int r, int g, int b);
+void canvasPaint(canvas *c, vec2<float> textureCoord, int r, int g, int b, bool saveHistory = false);
 void canvasPaintSquare(canvas *c, vec2<float> textureCoordCenter, int r, int g, int b, int sz);
+void canvasPaintLine(canvas *c, vec2<float> textureCoordA, vec2<float> textureCoordB, int r, int g, int b, bool saveHistory = false);
 void canvasUndo(canvas *c);

@@ -45,29 +45,31 @@ void fillCanvas(canvas *c, int r, int g, int b)
         }
 }
 
-void canvasPaint(canvas *c, vec2<float> textureCoord, int r, int g, int b)
+void canvasPaint(canvas *c, vec2<float> textureCoord, int r, int g, int b, bool saveHistory)
 {
     vec2<int> pixelCoord = vec2<int>(c->pxDimension.x * textureCoord.x, c->pxDimension.y * textureCoord.y);
 
-    historyEntry e;
-    e.modifiedPixels = new pixelHistory[1];
-    e.nModifiedPixels = 1;
-    e.modifiedPixels[0].pos = pixelCoord;
-
-    c->history.push_back(e);
-
 	int pixelPos = c->rowSz * pixelCoord.y + pixelCoord.x * 3;
-    e.modifiedPixels[0].oldR = c->pixels[pixelPos];
-    e.modifiedPixels[0].oldG = c->pixels[pixelPos + 1];
-    e.modifiedPixels[0].oldB = c->pixels[pixelPos + 2];
+    if(saveHistory)
+    {
+        historyEntry e;
+        e.modifiedPixels = new pixelHistory[1];
+        e.nModifiedPixels = 1;
+        e.modifiedPixels[0].pos = pixelCoord;
+        c->history.push_back(e);
+        e.modifiedPixels[0].oldR = c->pixels[pixelPos];
+        e.modifiedPixels[0].oldG = c->pixels[pixelPos + 1];
+        e.modifiedPixels[0].oldB = c->pixels[pixelPos + 2];
+
+        e.modifiedPixels[0].newR = r;
+        e.modifiedPixels[0].newG = g;
+        e.modifiedPixels[0].newB = b;
+    }
 
 	c->pixels[pixelPos] = r;
 	c->pixels[pixelPos + 1] = g;
 	c->pixels[pixelPos + 2] = b;
 
-    e.modifiedPixels[0].newR = r;
-    e.modifiedPixels[0].newG = g;
-    e.modifiedPixels[0].newB = b;
 }
 
 void canvasPaintSquare(canvas *c, vec2<float> textureCoordCenter, int r, int g, int b, int sz)
@@ -105,3 +107,44 @@ void canvasUndo(canvas *c)
     c->history.pop_back();
 }
 
+void canvasPaintLine(canvas *c, vec2<float> textureCoordA, vec2<float> textureCoordB, int r, int g, int b, bool saveHistory)
+{
+    vec2<int> pixelCoordA(textureCoordA.x * c->pxDimension.x, textureCoordA.y * c->pxDimension.y);
+    vec2<int> pixelCoordB(textureCoordB.x * c->pxDimension.x, textureCoordB.y * c->pxDimension.y);
+    vec2<int> diff = pixelCoordB - pixelCoordA;
+
+    int maxDiff = std::max(abs(diff.x), abs(diff.y));
+    maxDiff = std::max(maxDiff, 1);
+
+    if(saveHistory)
+    {
+        historyEntry e;
+        e.modifiedPixels = new pixelHistory[maxDiff + 1];
+        e.nModifiedPixels = maxDiff + 1;
+        for(int i = 0; i <= maxDiff; ++i)
+        {
+            vec2<int> pos = pixelCoordA + diff * i / maxDiff;   
+            int pixelIndex = c->rowSz * pos.y + pos.x * 3;
+            e.modifiedPixels[i].oldR = c->pixels[pixelIndex];
+            e.modifiedPixels[i].oldG = c->pixels[pixelIndex + 1];
+            e.modifiedPixels[i].oldB = c->pixels[pixelIndex + 2];
+
+            e.modifiedPixels[i].newR = r;
+            e.modifiedPixels[i].newG = g;
+            e.modifiedPixels[i].newB = b;
+
+            e.modifiedPixels[i].pos = pos;
+        }
+        c->history.push_back(e);
+    }
+
+    for(int i = 0; i <= maxDiff; ++i)
+    {
+        vec2<int> pos = pixelCoordA + diff * i / maxDiff;
+
+        int pixelIndex = c->rowSz * pos.y + pos.x * 3;
+        c->pixels[pixelIndex] = r;
+        c->pixels[pixelIndex + 1] = g;
+        c->pixels[pixelIndex + 2] = b;
+    }
+}

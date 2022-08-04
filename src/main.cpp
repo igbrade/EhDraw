@@ -1,3 +1,4 @@
+#include <processthreadsapi.h>
 #define WIN32_LEAN_AND_MEAN 
 #include <windows.h>
 #include <wingdi.h>
@@ -67,52 +68,53 @@ vec2<float> screenToCanvasTextureCoord(vec2<int> screenPos)
 
 void canvasPaintLine(vec2<int> screenA, vec2<int> screenB, int r, int g, int b)
 {
-    canvasPaint(&cnv, screenToCanvasTextureCoord(screenA), r, g, b);
+    canvasPaintLine(&cnv, screenToCanvasTextureCoord(screenA), screenToCanvasTextureCoord(screenB), r, g, b);
+    // canvasPaint(&cnv, screenToCanvasTextureCoord(screenA), r, g, b);
 
-    int dX = abs(screenA.x - screenB.x);
-    int dY = abs(screenA.y - screenB.y);
-    int x = screenB.x, y = screenB.y;
-    bool swapped = 0;
-    if(dX < dY)
-    {
-        swapped = 1, std::swap(x, y), std::swap(screenA.x, screenA.y), std::swap(dX, dY);
-    }
+    // int dX = abs(screenA.x - screenB.x);
+    // int dY = abs(screenA.y - screenB.y);
+    // int x = screenB.x, y = screenB.y;
+    // bool swapped = 0;
+    // if(dX < dY)
+    // {
+    //     swapped = 1, std::swap(x, y), std::swap(screenA.x, screenA.y), std::swap(dX, dY);
+    // }
     
-    while(x != screenA.x || y != screenA.y)
-    {
-        int progressionRate = (dY == 0 ? 0x3f3f3f3f : dX / dY);
-        while(progressionRate-- && x != screenA.x)
-        {
-            if(x < screenA.x) x++;
-            else x--;
+    // while(x != screenA.x || y != screenA.y)
+    // {
+    //     int progressionRate = (dY == 0 ? 0x3f3f3f3f : dX / dY);
+    //     while(progressionRate-- && x != screenA.x)
+    //     {
+    //         if(x < screenA.x) x++;
+    //         else x--;
 
-            if(swapped)
-            {
-                canvasPaint(&cnv, screenToCanvasTextureCoord(vec2<int>(y, x)), r, g, b);
-            }
-            else
-            {
-                canvasPaint(&cnv, screenToCanvasTextureCoord(vec2<int>(x, y)), r, g, b);
-            }
-        }
-        if(y != screenA.y)
-        {
-            if(y < screenA.y) y++;
-            else y--;
-        }
+    //         if(swapped)
+    //         {
+    //             canvasPaint(&cnv, screenToCanvasTextureCoord(vec2<int>(y, x)), r, g, b);
+    //         }
+    //         else
+    //         {
+    //             canvasPaint(&cnv, screenToCanvasTextureCoord(vec2<int>(x, y)), r, g, b);
+    //         }
+    //     }
+    //     if(y != screenA.y)
+    //     {
+    //         if(y < screenA.y) y++;
+    //         else y--;
+    //     }
 
-        if(swapped)
-        {
-            canvasPaint(&cnv, screenToCanvasTextureCoord(vec2<int>(y, x)), r, g, b);
-        }
-        else
-        {
-            canvasPaint(&cnv, screenToCanvasTextureCoord(vec2<int>(x, y)), r, g, b);
-        }
-    }
+    //     if(swapped)
+    //     {
+    //         canvasPaint(&cnv, screenToCanvasTextureCoord(vec2<int>(y, x)), r, g, b);
+    //     }
+    //     else
+    //     {
+    //         canvasPaint(&cnv, screenToCanvasTextureCoord(vec2<int>(x, y)), r, g, b);
+    //     }
+    // }
 
-    if(swapped)
-        std::swap(screenA.x, screenA.y);
+    // if(swapped)
+    //     std::swap(screenA.x, screenA.y);
 }
   
 extern void (*drawCallback)();
