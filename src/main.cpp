@@ -126,7 +126,11 @@ extern void (*mouseWheelCallback)(int wheelDelta);
 
 void onMouseWheel(int wheelDelta)
 {
-    
+    canvasYY += wheelDelta / 200.0f;
+    if(canvasYY < 0.75)
+        canvasYY = 0.75;
+    if(canvasYY > 1.5)
+        canvasYY = 1.5;
 }
 
 void onMouseMove(int mouseX, int mouseY)
