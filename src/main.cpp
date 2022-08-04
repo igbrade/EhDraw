@@ -122,6 +122,12 @@ extern void (*mouseUpCallback)(int mouseX, int mouseY);
 extern void (*resizeCallback)(int newWidth, int newHeight);
 extern void (*keyDownCallback)(int key);
 extern void (*keyUpCallback)(int key);
+extern void (*mouseWheelCallback)(int wheelDelta);
+
+void onMouseWheel(int wheelDelta)
+{
+    
+}
 
 void onMouseMove(int mouseX, int mouseY)
 {
@@ -242,6 +248,7 @@ int main()
 	resizeCallback = onResize;
 	keyDownCallback = onKeyDown;
     keyUpCallback = onKeyUp;
+    mouseWheelCallback = onMouseWheel;
 
 	win32ShowWindow(&window);
 

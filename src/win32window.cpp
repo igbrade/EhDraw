@@ -14,6 +14,7 @@ void (*mouseUpCallback)(int mouseX, int mouseY);
 void (*resizeCallback)(int newWidth, int newHeight);
 void (*keyDownCallback)(int key);
 void (*keyUpCallback)(int key);
+void (*mouseWheelCallback)(int wheelDelta);
 
 bool win32Init()
 {
@@ -204,6 +205,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			int height = HIWORD(lParam);
 			if(resizeCallback != NULL)
 				resizeCallback(width, height);
+			break;
+		}
+		case WM_MOUSEWHEEL:
+		{
+			short delta = GET_WHEEL_DELTA_WPARAM(wParam);
+			if(mouseWheelCallback != NULL)
+				mouseWheelCallback((int)delta);
 			break;
 		}
 	}
