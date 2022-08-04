@@ -1,4 +1,3 @@
-#include <processthreadsapi.h>
 #define WIN32_LEAN_AND_MEAN 
 #include <windows.h>
 #include <wingdi.h>
@@ -42,6 +41,12 @@ void draw()
     glFlush();
 }
 
+bool canvasContainsPoint(vec2<float> pt)
+{
+    return (canvasPos.x - canvasXX <= pt.x && pt.x <= canvasPos.x + canvasXX)
+    && (canvasPos.y - canvasYY <= pt.y && pt.y <= canvasPos.y + canvasYY);
+}
+
 bool mouseDown = false;
 bool spaceBarDown = false;
 bool eraser = false;
@@ -68,7 +73,7 @@ vec2<float> screenToCanvasTextureCoord(vec2<int> screenPos)
 
 void canvasPaintLine(vec2<int> screenA, vec2<int> screenB, int r, int g, int b)
 {
-    canvasPaintLine(&cnv, screenToCanvasTextureCoord(screenA), screenToCanvasTextureCoord(screenB), r, g, b);
+    canvasPaintLine(&cnv, screenToCanvasTextureCoord(screenA), screenToCanvasTextureCoord(screenB), r, g, b, true);
     // canvasPaint(&cnv, screenToCanvasTextureCoord(screenA), r, g, b);
 
     // int dX = abs(screenA.x - screenB.x);
@@ -153,21 +158,18 @@ void onMouseMove(int mouseX, int mouseY)
     if(mouseDown)
     {
         vec2<float> normalized = screenToNormalized(mouseCoords);
-        if(canvasPos.x - canvasXX <= normalized.x && normalized.x <= canvasPos.x + canvasXX)
+        if(canvasContainsPoint(normalized))
         {
-            if(canvasPos.y - canvasYY <= normalized.y && normalized.y <= canvasPos.y + canvasYY)
-            {
-                if(eraser)
-                    canvasPaintLine(mouseCoords, lastMouse, 0xff, 0xff, 0xff);
-                else 
-                    canvasPaintLine(mouseCoords, lastMouse, 0, 0, 0);
+            if(eraser)
+                canvasPaintLine(mouseCoords, lastMouse, 0xff, 0xff, 0xff);
+            else 
+                canvasPaintLine(mouseCoords, lastMouse, 0, 0, 0);
 
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cnv.pxDimension.x, cnv.pxDimension.y, 0, GL_RGB, GL_UNSIGNED_BYTE, cnv.pixels);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cnv.pxDimension.x, cnv.pxDimension.y, 0, GL_RGB, GL_UNSIGNED_BYTE, cnv.pixels);
 
-                PostMessage(window.hwnd, WM_PAINT, 0, 0);
+            PostMessage(window.hwnd, WM_PAINT, 0, 0);
 
-                lastMouse = mouseCoords;
-            }
+            lastMouse = mouseCoords;
         }
     }
 }
@@ -180,19 +182,16 @@ void onMouseDown(int mouseX, int mouseY)
     if(spaceBarDown)
         return;
 
-    if(canvasPos.x - canvasXX <= normalized.x && normalized.x <= canvasPos.x + canvasXX)
+    if(canvasContainsPoint(normalized))
     {
-        if(canvasPos.y - canvasYY <= normalized.y && normalized.y <= canvasPos.y + canvasYY)
-        {
-        	if(eraser)
-        		canvasPaint(&cnv, normalizedToCanvasTextureCoord(normalized), 0xff, 0xff, 0xff);
-        	else	
-            	canvasPaint(&cnv, normalizedToCanvasTextureCoord(normalized), 0, 0, 0);
+    	if(eraser)
+    		canvasPaint(&cnv, normalizedToCanvasTextureCoord(normalized), 0xff, 0xff, 0xff);
+    	else	
+        	canvasPaint(&cnv, normalizedToCanvasTextureCoord(normalized), 0, 0, 0, true);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cnv.pxDimension.x, cnv.pxDimension.y, 0, GL_RGB, GL_UNSIGNED_BYTE, cnv.pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cnv.pxDimension.x, cnv.pxDimension.y, 0, GL_RGB, GL_UNSIGNED_BYTE, cnv.pixels);
 
-            PostMessage(window.hwnd, WM_PAINT, 0, 0);
-        }
+        PostMessage(window.hwnd, WM_PAINT, 0, 0);
     }
     lastMouse = mousePos;
 }
