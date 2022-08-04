@@ -136,8 +136,9 @@ void onMouseWheel(int wheelDelta)
     canvasYY += wheelDelta / 200.0f;
     if(canvasYY < 0.75)
         canvasYY = 0.75;
-    if(canvasYY > 1.5)
-        canvasYY = 1.5;
+    if(canvasYY > 2.5)
+        canvasYY = 2.5;
+    PostMessage(window.hwnd, WM_PAINT, 0, 0);
 }
 
 void onMouseMove(int mouseX, int mouseY)
