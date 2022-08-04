@@ -1,6 +1,7 @@
 #include "canvas.hpp"
 #include <GL/gl.h>
 #include <algorithm>
+#include <cstdio>
 
 void initCanvas(canvas *c, vec2<int> dimension)
 {
@@ -68,4 +69,22 @@ void canvasPaintSquare(canvas *c, vec2<float> textureCoordCenter, int r, int g, 
     		c->pixels[pixelPos + 2] = b;
     	}
 	}
+}
+
+void canvasUndo(canvas *c)
+{
+    if(c->history.empty())
+    {
+        printf("Nothing to undo.\n");
+        return;
+    }
+    historyEntry &e = c->history.back();
+    for(int i = 0; i < e.nModifiedPixels; ++i)
+    {
+        int pixelPos = c->rowSz * e.modifiedPixels[i].pos.y + e.modifiedPixels[i].pos.x * 3;
+        c->pixels[pixelPos] = e.modifiedPixels[i].oldR;
+        c->pixels[pixelPos + 1] = e.modifiedPixels[i].oldG;
+        c->pixels[pixelPos + 2] = e.modifiedPixels[i].oldB;
+    }
+    c->history.pop_back();
 }

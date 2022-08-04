@@ -201,6 +201,11 @@ void onKeyDown(int key)
 {
 	if(key == 'E')
 		eraser = !eraser;
+    if(key == 'Z')
+    {
+        canvasUndo(&cnv);
+        return;
+    }
     if(key == 'C')
     {
         fillCanvas(&cnv, 0xff, 0xff, 0xff);
